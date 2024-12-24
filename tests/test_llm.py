@@ -1,6 +1,6 @@
 import pytest
 from pydantic import BaseModel
-from agentix import LLM
+from agentics import LLM
 
 
 def test_llm_chat():

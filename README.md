@@ -1,17 +1,17 @@
-# Agentix
+# Agentics
 
 A minimal LLM agent library.
 
 ## Installation
 
 ```bash
-pip install agentix
+pip install agentics
 ```
 
 ## Usage
 
 ```python
-from agentix import LLM
+from agentics import LLM
 llm = LLM("You are a helpful assistant")
 response = llm("Hello!")
 print(response)

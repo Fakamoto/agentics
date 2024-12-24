@@ -9,7 +9,7 @@ from .utils import (
     tool_calls_message,
 )
 
-__version__ = importlib.metadata.version("agentix")
+__version__ = importlib.metadata.version("agentics")
 
 __all__ = [
     # Main classes

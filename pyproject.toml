@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "agentix"
+name = "agentics"
 version = "0.1.0"
 description = "A minimal LLM agent library"
 authors = ["Facundo Goiriz <facundogoiriz@gmail.com>"]
