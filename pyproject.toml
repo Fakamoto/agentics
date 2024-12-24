@@ -1,14 +1,19 @@
 [project]
-name = "agentic"
+name = "agentix"
 version = "0.1.0"
-description = "A minimal LLM agent framework"
+authors = [
+    { name = "Facundo Goiriz", email = "facundogoiriz@gmail.com" },
+]
+description = "A minimal LLM agent library"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
 dependencies = [
     "openai>=1.58.1",
     "pydantic>=2.10.4",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentix"] 
 
 [build-system]
 requires = ["hatchling"]
@@ -17,4 +22,3 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-ra -q" 

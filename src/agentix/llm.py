@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from openai import OpenAI
-from utils import (
+from .utils import (
     create_tool_schema,
     execute_tool,
     format_tool_output,

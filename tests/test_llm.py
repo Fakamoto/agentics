@@ -159,3 +159,22 @@ def test_llm_tool_choice():
     llm = LLM()
     response = llm.chat("What's the weather like?", tools=[get_weather, get_time])
     assert "sunny" in response.lower()
+
+
+def test_llm_call_operator():
+    """Test the __call__ operator with tools and structured output."""
+
+    def add(a: int, b: int) -> int:
+        return a + b
+
+    class AddResult(BaseModel):
+        sum: int
+
+    llm = LLM()
+    response = llm(
+        "What is 5 plus 3? Use the add tool.",
+        tools=[add],
+        response_format=AddResult
+    )
+    assert isinstance(response, AddResult)
+    assert response.sum == 8
