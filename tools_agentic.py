@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
 from openai import OpenAI
-from openai.types.chat.chat_completion_message_tool_call import ChatCompletionMessageToolCall
-from utils import create_tool_schema, execute_tool, format_tool_output
+from utils import create_tool_schema, execute_tool, format_tool_output, system_message, user_message, assistant_message, tool_calls_message, tool_message
 
 
 client = OpenAI()
@@ -16,66 +15,67 @@ class AgentDefinition(BaseModel):
     objective: str
     motivation: str
 
-
-def system(text: str):
-    return {"role": "system", "content": text}
-
-def user(text: str):
-    return {"role": "user", "content": text}
-
-def assistant(text: str):
-    return {"role": "assistant", "content": text}
-
-def tool_calls(calls: list[ChatCompletionMessageToolCall]) -> dict:
-    """Convert tool calls to the proper message format"""
-    return {
-        "role": "assistant",
-        "content": None,
-        "tool_calls": [{
-            "id": call.id,
-            "type": "function",
-            "function": {
-                "name": call.function.name,
-                "arguments": call.function.arguments
-            }
-        } for call in calls]
-    }
-
-def tool(output: dict) -> dict:
-    """Convert a single tool output to the proper message format."""
-    return {
-        "role": "tool",
-        "tool_call_id": output["tool_call_id"],
-        "name": output["name"],
-        "content": output["content"]
-    }
-
-
 class LLM:
-    def __init__(self, model: str = "gpt-4o-mini"):
+    def __init__(self, system_prompt: str, model: str = "gpt-4o-mini"):
+        self.system_prompt = system_prompt
         self.model = model
+        self.messages = []
+        if self.system_prompt:
+            self.messages.append(system_message(self.system_prompt))
 
-    def chat(self, messages: list[dict], **kwargs) -> str:
+    def chat(self, prompt: str = None, **kwargs) -> str:
         """Chat completion with raw text response"""
+        if prompt:
+            self.messages.append(user_message(prompt))
+
         completion = client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=self.messages,
             **kwargs
         )
-        return completion.choices[0].message.content
+        text_response = completion.choices[0].message.content
+        self.messages.append(assistant_message(text_response))
+        return text_response
     
-    def chat_with_tools(self, messages: list[dict], tools: list[dict], **kwargs):
+    def chat_with_tools(self, prompt: str, tools: list[dict], **kwargs):
         """Chat completion with tools"""
+        self.messages.append(user_message(prompt))
+
+        tools=[create_tool_schema(tool) for tool in tools]
+
         completion = client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=self.messages,
             tools=tools,
             **kwargs
         )
         choice = completion.choices[0]
+
+        if choice.message.content and choice.finish_reason != "tool_calls":
+            text_response = choice.message.content
+            self.messages.append(assistant_message(text_response))
+            return text_response
+        
+
         if choice.finish_reason == "tool_calls":
-            return choice.message.tool_calls
-        return choice.message.content
+            tool_calls = choice.message.tool_calls
+            self.messages.append(tool_calls_message(tool_calls))
+
+            for tool_call in tool_calls:
+                output = execute_tool(
+                    tools=tools,
+                    function_name=tool_call.function.name,
+                    function_arguments_json=tool_call.function.arguments,
+                )
+                string_output = format_tool_output(output)
+                tool_output_message = tool_message(name=tool_call.function.name, tool_call_id=tool_call.id, content=string_output)
+                self.messages.append(tool_output_message)
+
+            response: str = self.chat()
+            return response
+        
+
+        
 
     def cast(self, messages: list[dict], response_format = None):
         """Chat completion with structured output"""
@@ -95,47 +95,15 @@ class LLM:
 
 # agent = Agent("Mastermind", "You are the Mastermind, you are tasked with writing a complete book of 100 pages about fire and save it in ./fire.pdf")
 
-llm = LLM()
-
-messages = [user("What is the answer to the enigma? and what is 2 + 2? use both tools")]
+llm = LLM("you are a helpful assistant that relies on tools to answer questions")
 
 def answer_to_enigma() -> str:
-    return "answer is 'facu'"
+    return "answer is 'mike es papanatas'"
 
 def add(a: int, b: int) -> int:
     return a + b
 
-tools = [answer_to_enigma, add]
-
-tools=[create_tool_schema(tool) for tool in tools]
-
-res = llm.chat_with_tools(messages, tools=tools)
-
-
-messages.append(tool_calls(res))
-
-tool_outputs = []
-for tool_call in res:
-    output = execute_tool(
-        tools=tools,
-        function_name=tool_call.function.name,
-        function_arguments_json=tool_call.function.arguments,
-    )
-    string_output = format_tool_output(output)
-    tool_outputs.append(
-        dict(
-            name=tool_call.function.name,
-            tool_call_id=tool_call.id,
-            content=string_output,
-        )
-    )
-
-
-for output in tool_outputs:
-    messages.append(tool(output))
-
-print(messages)
-response = llm.chat(messages)
-
+response = llm.chat_with_tools("what is the answer to the enigma? and what is 2 + 2? use both tools", tools=[answer_to_enigma, add])
 
 print(response)
+# The answer to the enigma is "mike es papanatas," and 2 + 2 equals 4.

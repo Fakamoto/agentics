@@ -1,10 +1,44 @@
 from typing import Any, Callable, TypeVar, Optional, Generic
 from pydantic import BaseModel, TypeAdapter, ConfigDict, PrivateAttr
+from openai.types.chat.chat_completion_message_tool_call import ChatCompletionMessageToolCall
 import inspect
 import json
 import asyncio
 
 T = TypeVar("T")
+def system_message(text: str):
+    return {"role": "system", "content": text}
+
+def user_message(text: str):
+    return {"role": "user", "content": text}
+
+def assistant_message(text: str):
+    return {"role": "assistant", "content": text}
+
+def tool_calls_message(calls: list[ChatCompletionMessageToolCall]) -> dict:
+    """Convert tool calls to the proper message format"""
+    return {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [{
+            "id": call.id,
+            "type": "function",
+            "function": {
+                "name": call.function.name,
+                "arguments": call.function.arguments
+            }
+        } for call in calls]
+    }
+
+def tool_message(name: str, tool_call_id: str, content: str) -> dict:
+    """Convert a single tool output to the proper message format."""
+    return {
+        "role": "tool",
+        "tool_call_id": tool_call_id,
+        "name": name,
+        "content": content
+    }
+
 
 class ToolFunction(BaseModel, Generic[T]):
     """Represents a callable function with its metadata"""
