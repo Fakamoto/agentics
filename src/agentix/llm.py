@@ -46,7 +46,7 @@ class LLM:
         tools: list[dict] = None,
         response_format: BaseModel = None,
         messages: list[dict] = None,
-        **kwargs
+        **kwargs,
     ):
         return self.chat(prompt, tools, response_format, messages, **kwargs)
 
@@ -85,7 +85,7 @@ class LLM:
         tools: list[dict] = None,
         response_format: BaseModel = None,
         messages: list[dict] = None,
-        **kwargs
+        **kwargs,
     ):
         """Chat completion with tools"""
         if prompt:
@@ -102,7 +102,7 @@ class LLM:
                 response_format=response_format,
                 tools=tools,
                 messages=messages or self.messages,
-                **kwargs
+                **kwargs,
             )
         else:
             completion = self._chat(
@@ -147,7 +147,7 @@ class LLM:
                 response_format=response_format,
                 tools=tools,
                 messages=messages or self.messages,
-                **kwargs
+                **kwargs,
             )
 
             return response

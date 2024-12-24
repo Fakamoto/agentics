@@ -172,9 +172,7 @@ def test_llm_call_operator():
 
     llm = LLM()
     response = llm(
-        "What is 5 plus 3? Use the add tool.",
-        tools=[add],
-        response_format=AddResult
+        "What is 5 plus 3? Use the add tool.", tools=[add], response_format=AddResult
     )
     assert isinstance(response, AddResult)
     assert response.sum == 8
