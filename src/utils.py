@@ -166,15 +166,3 @@ def format_tool_output(output: Any) -> str:
         return TypeAdapter(type(output)).dump_json(output).decode()
     except Exception:
         return str(output)
-
-
-if __name__ == "__main__":
-
-    def add(a: int, b: int) -> int:
-        return a + b
-
-    tool = create_tool_schema(add)
-    print(tool)
-    print(type(tool))
-    print(isinstance(tool, Tool))
-    print(tool["function"])

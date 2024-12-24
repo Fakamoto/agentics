@@ -1,6 +1,6 @@
 import pytest
 from pydantic import BaseModel
-from agentic import LLM
+from agentix import LLM
 
 
 def test_llm_chat():
@@ -13,13 +13,13 @@ def test_llm_chat():
 
 def test_llm_chat_with_tool():
     """2) Test LLM chat with one tool, verify a keyword is present in the response."""
+
     def secret_keyword_tool() -> str:
         return "SECRET_KEYWORD"
 
     llm = LLM()
     response = llm.chat(
-        "Can you reveal the secret keyword?",
-        tools=[secret_keyword_tool]
+        "Can you reveal the secret keyword?", tools=[secret_keyword_tool]
     )
     assert isinstance(response, str)
     assert "SECRET_KEYWORD" in response
@@ -32,10 +32,7 @@ def test_llm_chat_structured_output():
         message: str
 
     llm = LLM()
-    result = llm.chat(
-        "say hi.",
-        response_format=Response
-    )
+    result = llm.chat("say hi.", response_format=Response)
     assert isinstance(result, Response)
     assert isinstance(result.message, str)
 
@@ -52,7 +49,7 @@ def test_llm_chat_multiple_tools():
     llm = LLM()
     response = llm.chat(
         "Please reveal two secrets together.",
-        tools=[first_secret_tool, second_secret_tool]
+        tools=[first_secret_tool, second_secret_tool],
     )
     assert isinstance(response, str)
     assert "FIRST_SECRET" in response
@@ -73,9 +70,7 @@ def test_llm_chat_tool_with_structured_output():
 
     llm = LLM()
     result = llm.chat(
-        "what is the secret number?",
-        tools=[secret_number],
-        response_format=IntResponse
+        "what is the secret number?", tools=[secret_number], response_format=IntResponse
     )
     assert isinstance(result, IntResponse)
     assert result.number == 55
@@ -102,7 +97,7 @@ def test_llm_chat_multiple_tools_with_structured_output():
     result = llm.chat(
         "What are the secret numbers?",
         tools=[first_secret_number, second_secret_number],
-        response_format=MultiToolResponse
+        response_format=MultiToolResponse,
     )
     assert isinstance(result, MultiToolResponse)
     assert result.first_number == 10
@@ -116,51 +111,51 @@ def test_llm_empty_tools_list():
     response = llm.chat("Hello", tools=[])
     assert isinstance(response, str)
 
+
 def test_llm_complex_structured_output():
     """Test nested structured output."""
+
     class NestedModel(BaseModel):
         value: str
-    
+
     class ComplexResponse(BaseModel):
         field1: str
         nested: NestedModel
-    
+
     llm = LLM()
-    result = llm.chat(
-        "Return nested structure",
-        response_format=ComplexResponse
-    )
+    result = llm.chat("Return nested structure", response_format=ComplexResponse)
     assert isinstance(result, ComplexResponse)
     assert isinstance(result.nested, NestedModel)
+
 
 # Quality/Behavior Tests
 def test_llm_math_accuracy():
     """Test mathematical accuracy using tools."""
+
     def multiply(a: int, b: int) -> int:
         return a * b
-    
+
     class MathResult(BaseModel):
         result: int
-    
+
     llm = LLM()
     response = llm.chat(
         "What is 6 times 7? Use the multiply tool.",
         tools=[multiply],
-        response_format=MathResult
+        response_format=MathResult,
     )
     assert response.result == 42
 
+
 def test_llm_tool_choice():
     """Test if model chooses correct tool when given options."""
+
     def get_weather() -> str:
         return "sunny"
-    
+
     def get_time() -> str:
         return "12:00"
-    
+
     llm = LLM()
-    response = llm.chat(
-        "What's the weather like?",
-        tools=[get_weather, get_time]
-    )
+    response = llm.chat("What's the weather like?", tools=[get_weather, get_time])
     assert "sunny" in response.lower()

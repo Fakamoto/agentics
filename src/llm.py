@@ -28,22 +28,33 @@ class AgentDefinition(BaseModel):
 
 
 class LLM:
-    def __init__(self, system_prompt: str=None, model: str = "gpt-4o-mini", messages: list[dict] = None):
+    def __init__(
+        self,
+        system_prompt: str = None,
+        model: str = "gpt-4o-mini",
+        messages: list[dict] = None,
+    ):
         self.system_prompt = system_prompt
         self.model = model
         self.messages = messages or []
         if self.system_prompt:
             self.messages.append(system_message(self.system_prompt))
 
+    def __call__(
+        self,
+        prompt: str = None,
+        tools: list[dict] = None,
+        response_format: BaseModel = None,
+        messages: list[dict] = None,
+        **kwargs
+    ):
+        return self.chat(prompt, tools, response_format, messages, **kwargs)
+
     def _chat(self, messages=None, tools=None, **kwargs):
-        params = {
-            "model": self.model,
-            "messages": messages or self.messages,
-            **kwargs
-        }
+        params = {"model": self.model, "messages": messages or self.messages, **kwargs}
         if tools:
             params["tools"] = tools
-            
+
         completion = client.chat.completions.create(**params)
         return completion
 
@@ -54,13 +65,19 @@ class LLM:
             "model": self.model,
             "messages": messages or self.messages,
             "response_format": response_format,
-            **kwargs
+            **kwargs,
         }
         if tools:
             params["tools"] = tools
 
         completion = client.beta.chat.completions.parse(**params)
         return completion
+
+    def cast(self, prompt: str, response_format=None):
+        """Chat completion with structured output without saving the conversation"""
+        messages = [user_message(prompt)]
+        completion = self._cast(messages=messages, response_format=response_format)
+        return completion.choices[0].message.parsed
 
     def chat(
         self,
@@ -82,10 +99,15 @@ class LLM:
 
         if response_format:
             completion = self._cast(
-                response_format=response_format, tools=tools, messages=messages or self.messages, **kwargs
+                response_format=response_format,
+                tools=tools,
+                messages=messages or self.messages,
+                **kwargs
             )
         else:
-            completion = self._chat(messages=messages or self.messages, tools=tools, **kwargs)
+            completion = self._chat(
+                messages=messages or self.messages, tools=tools, **kwargs
+            )
 
         choice = completion.choices[0]
 
@@ -122,63 +144,10 @@ class LLM:
                 self.messages.append(tool_output_message)
 
             response: str = self.chat(
-                response_format=response_format, tools=tools, messages=messages or self.messages, **kwargs
+                response_format=response_format,
+                tools=tools,
+                messages=messages or self.messages,
+                **kwargs
             )
 
             return response
-
-    def __call__(
-        self,
-        prompt: str = None,
-        tools: list[dict] = None,
-        response_format: BaseModel = None,
-        messages: list[dict] = None,
-        **kwargs
-    ):
-        return self.chat(prompt, tools, response_format, messages, **kwargs)
-    
-
-    def cast(self, prompt: str, response_format=None):
-        """Chat completion with structured output without saving the conversation"""
-        messages = [user_message(prompt)]
-        completion = self._cast(messages=messages, response_format=response_format)
-        return completion.choices[0].message.parsed
-
-
-# agent = Agent("Mastermind", "You are the Mastermind, you are tasked with writing a complete book of 100 pages about fire and save it in ./fire.pdf")
-
-llm = LLM("you are a helpful assistant that relies on tools to answer questions.")
-
-
-class Response(BaseModel):
-    answer: str
-    answer_but_in_upper_case: str
-    confidence: float
-
-
-def answer_to_enigma() -> str:
-    return "answer is 'mike es papanatas'"
-
-
-def add(a: int, b: int) -> int:
-    return a + b
-
-
-response = llm.chat(
-    "what is the answer to the enigma? and what is 2 + 2? use both tools",
-    tools=[answer_to_enigma, add],
-    response_format=Response,
-)
-
-print(response)
-print(type(response))
-# The answer to the enigma is "mike es papanatas," and 2 + 2 equals 4.
-
-
-# test cast
-response = llm.cast(
-    "say facundo",
-    response_format=Response,
-)
-print(response)
-print(type(response))
