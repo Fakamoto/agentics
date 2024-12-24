@@ -288,4 +288,3 @@ if __name__ == "__main__":
     )
 
     group.run()
-    # print(group.generate_agent_system(manager))
