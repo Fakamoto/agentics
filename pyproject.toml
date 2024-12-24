@@ -1,0 +1,20 @@
+[project]
+name = "agentic"
+version = "0.1.0"
+description = "A minimal LLM agent framework"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+dependencies = [
+    "openai>=1.58.1",
+    "pydantic>=2.10.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -q" 
