@@ -36,14 +36,11 @@ group = Group(
          4. Editor reviews and provides feedback
          5. If editor approves: they set stop_process=true
          6. If editor requests changes: process continues with manager
-         Each member MUST stick to their role and follow this exact workflow."""
+         Each member MUST stick to their role and follow this exact workflow.""",
 )
 
 group.run()
 
 # After the group has finished running
-final_text = group.query(
-    agent=manager,
-    message="Please give me the finished product"
-)
+final_text = group.query(agent=manager, message="Please give me the finished product")
 print(final_text)

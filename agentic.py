@@ -3,14 +3,17 @@ from typing import Any, List, Optional, Tuple, Type, TypeVar, Union
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 client = OpenAI()
+
 
 def system(text: str):
     return {"role": "system", "content": text}
 
+
 def user(text: str):
     return {"role": "user", "content": text}
+
 
 def assistant(text: str):
     return {"role": "assistant", "content": text}
@@ -28,21 +31,30 @@ class LLM:
             messages=messages,
         )
         return completion.choices[0].message.content
-    
-    def chat(self, messages: List[dict] = [], response_format: Type[Union[T, str, int, float, bool]] = None) -> Union[T, str, int, float, bool]:
+
+    def chat(
+        self,
+        messages: List[dict] = [],
+        response_format: Type[Union[T, str, int, float, bool]] = None,
+    ) -> Union[T, str, int, float, bool]:
         """Chat completion with raw text response"""
-        if response_format: 
+        if response_format:
             return self._cast(messages, response_format)
         else:
             return self._chat(messages)
-    
 
-    def _cast(self, messages: List[dict] = [], response_format: Type[Union[T, str, int, float, bool]] = None) -> Any:
+    def _cast(
+        self,
+        messages: List[dict] = [],
+        response_format: Type[Union[T, str, int, float, bool]] = None,
+    ) -> Any:
         """Chat completion with structured output"""
         is_primitive = response_format in (str, int, float, bool)
         if is_primitive:
+
             class PrimitiveWrapper(BaseModel):
                 value: Any = Field(...)
+
             response_format = PrimitiveWrapper
 
         completion = client.beta.chat.completions.parse(
@@ -52,36 +64,61 @@ class LLM:
         )
 
         validated_data = completion.choices[0].message.parsed
-        
+
         if is_primitive:
             return validated_data.value
         return validated_data
-    
 
-    def cast(self, prompt: str, response_format: Type[Union[T, str, int, float, bool]]) -> Any:
+    def cast(
+        self, prompt: str, response_format: Type[Union[T, str, int, float, bool]]
+    ) -> Any:
         """Simple chat completion for a single prompt with structured output"""
         return self._cast(messages=[user(prompt)], response_format=response_format)
 
 
 class AgentOutput(BaseModel):
-    internal_thoughts: str = Field(..., description="Your first thoughts, this is a place to reflect and talk to yourself. This will not be shared with the group.")
-    response_to_last_communication: str = Field(..., description="Direct response to the previous agent's message or instructions. Use this to acknowledge the prior message/instructions or to give feedback/corrections/comments to the prior agent.")
-    content: Optional[str] = Field(None, description="The actual work product or raw output (like written text, edits, etc.) - not instructions or coordination messages. Use this to pass on your work product to the next agent. Like you would do in real life sending a document to a colleague.")
-    stop_process: bool = Field(..., description="IMPORTANT: Set to true when the process should end. Only authorized agents can set this to true. If this is set to true, the process will end and no more agents will be called.")
-    next_agent: str = Field(..., description="The name of the next Agent to pass control to.")
-    instructions_to_next_agent: str = Field(..., description="Instructions passed on to the next agent.")
+    internal_thoughts: str = Field(
+        ...,
+        description="Your first thoughts, this is a place to reflect and talk to yourself. This will not be shared with the group.",
+    )
+    response_to_last_communication: str = Field(
+        ...,
+        description="Direct response to the previous agent's message or instructions. Use this to acknowledge the prior message/instructions or to give feedback/corrections/comments to the prior agent.",
+    )
+    content: Optional[str] = Field(
+        None,
+        description="The actual work product or raw output (like written text, edits, etc.) - not instructions or coordination messages. Use this to pass on your work product to the next agent. Like you would do in real life sending a document to a colleague.",
+    )
+    stop_process: bool = Field(
+        ...,
+        description="IMPORTANT: Set to true when the process should end. Only authorized agents can set this to true. If this is set to true, the process will end and no more agents will be called.",
+    )
+    next_agent: str = Field(
+        ..., description="The name of the next Agent to pass control to."
+    )
+    instructions_to_next_agent: str = Field(
+        ..., description="Instructions passed on to the next agent."
+    )
+
 
 class AgentOutputWithMessage(AgentOutput):
-    agent_message: str = Field(..., description="A message to the user about the agent's output.")
+    agent_message: str = Field(
+        ..., description="A message to the user about the agent's output."
+    )
+
 
 class GroupMessage(BaseModel):
-    agent_name: str = Field(..., description="The name of the agent that sent the message.")
+    agent_name: str = Field(
+        ..., description="The name of the agent that sent the message."
+    )
     content: str = Field(..., description="The content of the message.")
+
 
 class Agent(LLM):
     """
     Represents a single agent with a specific role.
     """
+
     def __init__(
         self,
         name: str,
@@ -105,7 +142,7 @@ class Agent(LLM):
             agent_message += f"{self.name}'s content:\n{agent_output.content}\n\n"
         agent_message += f"Next agent:\n{agent_output.next_agent}\n\n"
         agent_message += f"{self.name}'s message to {agent_output.next_agent}:\n{agent_output.instructions_to_next_agent}"
-        
+
         return AgentOutputWithMessage(
             internal_thoughts=agent_output.internal_thoughts,
             response_to_last_communication=agent_output.response_to_last_communication,
@@ -113,13 +150,15 @@ class Agent(LLM):
             stop_process=agent_output.stop_process,
             next_agent=agent_output.next_agent,
             instructions_to_next_agent=agent_output.instructions_to_next_agent,
-            agent_message=agent_message
+            agent_message=agent_message,
         )
+
 
 class Group:
     """
     Manages a list of Agents, orchestrates the conversation among them.
     """
+
     def __init__(
         self,
         agents: List[Agent],
@@ -135,7 +174,7 @@ class Group:
         self.names_to_agents = {agent.name: agent for agent in self.agents}
         for agent in self.agents:
             agent.system = self.generate_agent_system(agent)
-    
+
     def generate_group_information(self) -> str:
         """Generates a text including dynamic information about this specific group.
         Includes:
@@ -145,16 +184,16 @@ class Group:
         """
         name_to_role = {agent.name: agent.role for agent in self.agents}
         agent_names = ", ".join([agent.name for agent in self.agents])
-        
+
         # Create dynamically numbered agent roles
         agent_roles = ""
         for i, agent in enumerate(self.agents, 1):
             agent_roles += f"{i}. {agent.name}\n"
-            role_lines = name_to_role[agent.name].strip().split('\n')
+            role_lines = name_to_role[agent.name].strip().split("\n")
             for line in role_lines:
                 agent_roles += f"   {line.strip()}\n"
             agent_roles += "\n"
-        
+
         return f"=== GROUP INFORMATION ===\n\nA. Group Members\n----------------\n{agent_names}\n\nB. Agent Roles \n--------------\n{agent_roles}\n\nC. Group Instructions\n---------------------\n{self.instructions}"
 
     def generate_agent_system(self, agent: Agent) -> str:
@@ -164,19 +203,16 @@ class Group:
         group_information = self.generate_group_information()
         return f"{instructions}\n\n{agent_information}\n\n{group_information}"
 
-
-
     def run(self):
         n = 0
         group_messages: list[GroupMessage] = []
         stop_process = False
         working_agent = self.first_agent
-        
+
         while not stop_process:
             n += 1
             print(f"=== {n} ===")
             print(f"=== {working_agent.name} ===")
-
 
             messages = [system(working_agent.system)]
             for group_message in group_messages:
@@ -185,12 +221,14 @@ class Group:
                 else:
                     messages.append(user(group_message.content))
 
-                    
-
             print("--------------------------------")
             output: AgentOutputWithMessage = working_agent.chat(messages=messages)
             print(output.agent_message)
-            group_messages.append(GroupMessage(agent_name=working_agent.name, content=output.agent_message))
+            group_messages.append(
+                GroupMessage(
+                    agent_name=working_agent.name, content=output.agent_message
+                )
+            )
             stop_process = output.stop_process
             if output.stop_process:
                 print("=== STOPPING BY AGENT ===")
@@ -202,7 +240,6 @@ class Group:
 
             if n > self.max_iterations:
                 stop_process = True
-
 
         print("=== STOPPING ===")
         print(working_agent.name)
@@ -217,14 +254,14 @@ if __name__ == "__main__":
             2. Delegating writing tasks to the writer
             3. Requesting reviews from the editor
             4. Making decisions based on editor's feedback
-            You must NEVER write content yourself. Your job is purely coordination."""
+            You must NEVER write content yourself. Your job is purely coordination.""",
     )
 
     writer = Agent(
         name="Writer",
         role="""You are the writer. Your ONLY job is to write content when asked by the manager.
             You cannot make decisions about workflow or edit content.
-            You must wait for specific writing instructions and then create that content."""
+            You must wait for specific writing instructions and then create that content.""",
     )
 
     editor = Agent(
@@ -233,9 +270,8 @@ if __name__ == "__main__":
             1. Review content written by the writer
             2. Provide specific feedback and suggestions
             3. Give clear approval/rejection decisions
-            You cannot write new content or direct the workflow."""
+            You cannot write new content or direct the workflow.""",
     )
-
 
     # members will interact with each other, when a memmber is done, it will decide the next member to work on
     group = Group(
@@ -248,7 +284,7 @@ if __name__ == "__main__":
             4. Editor reviews and provides feedback
             5. If editor approves: they set stop_process=true
             6. If editor requests changes: process continues with manager
-            Each member MUST stick to their role and follow this exact workflow."""
+            Each member MUST stick to their role and follow this exact workflow.""",
     )
 
     group.run()
