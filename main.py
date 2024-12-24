@@ -1,5 +1,5 @@
 # Desired API of my Agentic LLM library
-from agentic import Agent, Group
+from groups import Agent, Group
 import json
 
 manager = Agent(
