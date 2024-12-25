@@ -85,6 +85,7 @@ class LLM:
         tools: list[dict] = None,
         response_format: BaseModel = None,
         messages: list[dict] = None,
+        single_tool_call_request: bool = False,
         **kwargs,
     ):
         """Chat completion with tools"""
@@ -143,11 +144,16 @@ class LLM:
                 )
                 self.messages.append(tool_output_message)
 
-            response: str = self.chat(
-                response_format=response_format,
-                tools=tools,
-                messages=messages or self.messages,
+            params = {
+                "response_format": response_format,
+                "tools": tools,
+                "messages": messages or self.messages,
                 **kwargs,
-            )
+            }
+
+            if single_tool_call_request:
+                params["tools"] = None
+
+            response: str = self.chat(**params)
 
             return response
