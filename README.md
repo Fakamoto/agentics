@@ -15,8 +15,10 @@ pip install agentics
 ```python
 from agentics import LLM
 
-llm = LLM()
-response = llm("What is the capital of France?")
+llm = LLM(system_prompt="You know everything about the world")
+
+response: str = llm("What is the capital of France?")
+
 print(response)
 # The capital of France is Paris.
 ```
@@ -32,10 +34,11 @@ class ExtractUser(BaseModel):
     age: int
 
 llm = LLM()
-response: ExtractUser = llm.chat("John Doe is 30 years old.", response_format=ExtractUser)
 
-assert response.name == "John Doe"
-assert response.age == 30
+res = llm.chat("John Doe is 30 years old.", response_format=ExtractUser)
+
+assert res.name == "John Doe"
+assert res.age == 30
 ```
 
 ### Tool Usage
@@ -49,8 +52,10 @@ def visit_url(url: str):
     return requests.get(url).content.decode()
 
 llm = LLM()
-response = llm.chat("What's the top story on Hacker News?", tools=[visit_url])
-print(response)
+
+res = llm.chat("What's the top story on Hacker News?", tools=[visit_url])
+
+print(res)
 # The top story on Hacker News is: "Operating System in 1,000 Lines – Intro"
 ```
 
@@ -65,12 +70,14 @@ class HackerNewsStory(BaseModel):
     points: int
 
 llm = LLM()
-response: HackerNewsStory = llm.chat(
+
+res = llm.chat(
     "What's the top story on Hacker News?", 
     tools=[visit_url], 
     response_format=HackerNewsStory
 )
-print(response)
+
+print(res)
 # title='Operating System in 1,000 Lines – Intro' points=29
 ```
 
@@ -97,43 +104,14 @@ class BoxDimensions(BaseModel):
 
 llm = LLM()
 
-response: BoxDimensions = llm.chat(
+res = llm.chat(
     "Calculate the area and volume of a box that is 5.5 meters wide, 3.2 meters high and 2.1 meters deep", 
     tools=[calculate_area, calculate_volume],
     response_format=BoxDimensions
 )
 
-print(response)
+print(res)
 # width=5.5 height=3.2 depth=2.1 area=17.6 volume=36.96
-```
-
-### Weather Information with Multiple Tools
-
-```python
-def get_temperature(city: str):
-    """Get the current temperature for a city"""
-    # Simulated API response
-    return 22.5
-
-def convert_to_fahrenheit(celsius: float):
-    """Convert Celsius to Fahrenheit"""
-    return (celsius * 9/5) + 32
-
-class WeatherInfo(BaseModel):
-    city: str
-    celsius: float
-    fahrenheit: float
-
-llm = LLM()
-
-response: WeatherInfo = llm.chat(
-    "What's the temperature in Paris? Convert it to Fahrenheit.",
-    tools=[get_temperature, convert_to_fahrenheit],
-    response_format=WeatherInfo
-)
-
-print(response)
-# city='Paris' celsius=22.5 fahrenheit=72.5
 ```
 
 # API Reference
