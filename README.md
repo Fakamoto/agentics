@@ -1,6 +1,10 @@
 # Agentics
 
-A minimal LLM agent library that provides a simple interface for chat-based interactions with language models, supporting structured outputs and tool usage.
+Minimalistic library for LLM usage
+
+* Simple and flexible API
+* Function calling with tools
+* Structured outputs with Pydantic
 
 ## Installation
 
@@ -177,3 +181,61 @@ Both `llm.chat()` and `llm()` provide identical functionality as the main interf
    - Final text response is cast to model
 
 The conversation history is accessible via the `.messages` attribute, making it easy to inspect or manipulate the context.
+
+
+
+
+## Inspiration
+
+Agentics was born from a desire to simplify LLM interactions in Python. The existing landscape often requires verbose boilerplate:
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+print(response.choices[0].message.content)
+```
+
+
+When my goal in mind was to be able to simply do `llm("Hello!")`, with that desired interface is how I started building Agentics, this:
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+print(response.choices[0].message.content)
+```
+
+now turns into this:
+
+```python
+from agentics import LLM
+
+llm = LLM()
+response = llm("Hello!")
+print(response)
+```
+
+
+
+Agentics makes things simple while bringing these powerful features into the same library:
+
+- **Simple API**: Talk to LLMs with just a few lines of code
+- **Structured Output**: Like [instructor](https://github.com/instructor-ai/instructor), turns responses into Pydantic models
+- **Function Calling**: Like [Marvin's assistants](https://www.askmarvin.ai/docs/interactive/assistants/) but 
+using direct message-based communication instead of the 
+Assistants API
+
+I built this to make working with OpenAI's LLMs easier. It handles structured outputs and function calling without any fuss. Right now it only works with OpenAI, but it makes common LLM tasks way simpler.
