@@ -1,10 +1,11 @@
 # Agentics
 
-Minimalistic library for LLM usage
+Minimalist Python library for LLM usage
 
-* Simple and flexible API
-* Function calling with tools
-* Structured outputs with Pydantic
+* Zero boilerplate API - just `llm("Hello!")`
+* Native function calling with tools
+* Structured outputs via Pydantic
+* Single dependency (openai)
 
 ## Installation
 
@@ -12,7 +13,34 @@ Minimalistic library for LLM usage
 pip install agentics
 ```
 
-## Usage
+## Why Agentics?
+
+Compare:
+
+```python
+from openai import OpenAI
+
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+print(response.choices[0].message.content)
+```
+
+To this:
+
+```python
+from agentics import LLM
+
+llm = LLM()
+response: str = llm("Hello!")
+print(response)
+```
+
+## Quickstart
 
 ### Simple Chat
 
