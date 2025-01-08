@@ -123,36 +123,3 @@ response: WeatherInfo = llm.chat(
 
 print(response)
 # city='Paris' celsius=22.5 fahrenheit=72.5
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-class LLM(
-    system_prompt: str = None,
-    model: str = "gpt-4o-mini",
-    client: OpenAI = None,
-    messages: list[dict] = None
-)
-A class for interacting with language models through chat completions.
-
-This class provides a flexible interface for chat-based interactions with language models, supporting structured outputs, tool usage, and conversation management.
-
-Args:
-    system_prompt (str, optional): Initial system prompt to set context. Defaults to None.
-    model (str, optional): The model identifier to use. Defaults to "gpt-4o-mini".
-    messages (list[dict], optional): Initial conversation messages. Defaults to None.
-
-Attributes:
-    system_prompt (str): The system prompt used for context
-    model (str): The model identifier being used
-    messages (list[dict]): The conversation history
-"""
