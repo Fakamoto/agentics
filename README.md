@@ -2,11 +2,6 @@
 
 Minimalist Python library for LLM usage
 
-* Zero boilerplate API - just `llm("Hello!")`
-* Native function calling with tools
-* Structured outputs via Pydantic
-* Single dependency (openai)
-
 ## Installation
 
 ```bash
@@ -96,10 +91,15 @@ print(res)
 ```python
 from agentics import LLM
 from pydantic import BaseModel
+import requests
 
 class HackerNewsStory(BaseModel):
     title: str
     points: int
+
+def visit_url(url: str):
+    """Fetch the content of a URL"""
+    return requests.get(url).content.decode()
 
 llm = LLM()
 
