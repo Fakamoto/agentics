@@ -2,11 +2,6 @@
 
 Minimalist Python library for LLM usage
 
-* Zero boilerplate API - just `llm("Hello!")`
-* Native function calling with tools
-* Structured outputs via Pydantic
-* Single dependency (openai)
-
 ## Installation
 
 ```bash
