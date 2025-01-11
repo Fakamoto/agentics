@@ -51,7 +51,6 @@ class LLM:
         prompt: str = None,
         tools: list[dict] = None,
         response_format: BaseModel = None,
-        messages: list[dict] = None,
         single_tool_call_request: bool = False,
         **kwargs,
     ):
@@ -62,41 +61,38 @@ class LLM:
             prompt (str, optional): The input prompt. Defaults to None.
             tools (list[dict], optional): List of available tools. Defaults to None.
             response_format (BaseModel, optional): Expected response format. Defaults to None.
-            messages (list[dict], optional): Override conversation history. Defaults to None.
             single_tool_call_request (bool, optional): Whether to allow only one tool call. Defaults to False.
             **kwargs: Additional arguments passed to chat method.
 
         Returns:
             Union[str, BaseModel]: The model's response
         """
-        return self.chat(prompt, tools, response_format, messages, single_tool_call_request, **kwargs)
+        return self.chat(prompt, tools, response_format, single_tool_call_request, **kwargs)
 
-    def _chat(self, messages=None, tools=None, **kwargs):
+    def _chat(self, tools=None, **kwargs):
         """
         Internal method for raw chat completions.
 
         Args:
-            messages (list[dict], optional): Messages to send. Defaults to None.
             tools (list[dict], optional): Available tools. Defaults to None.
             **kwargs: Additional arguments passed to chat completion.
 
         Returns:
             ChatCompletion: Raw completion response from the model
         """
-        params = {"model": self.model, "messages": messages or self.messages, **kwargs}
+        params = {"model": self.model, "messages": self.messages, **kwargs}
         if tools:
             params["tools"] = tools
 
         completion = self.client.chat.completions.create(**params)
         return completion
 
-    def _cast(self, response_format=None, messages=None, tools=None, **kwargs):
+    def _cast(self, response_format=None, tools=None, **kwargs):
         """
         Internal method for structured chat completions.
 
         Args:
             response_format (BaseModel, optional): Expected response format. Defaults to None.
-            messages (list[dict], optional): Messages to send. Defaults to None.
             tools (list[dict], optional): Available tools. Defaults to None.
             **kwargs: Additional arguments passed to chat completion.
 
@@ -105,7 +101,7 @@ class LLM:
         """
         params = {
             "model": self.model,
-            "messages": messages or self.messages,
+            "messages": self.messages,
             "response_format": response_format,
             **kwargs,
         }
@@ -135,7 +131,6 @@ class LLM:
         prompt: str = None,
         tools: list[dict] = None,
         response_format: BaseModel = None,
-        messages: list[dict] = None,
         single_tool_call_request: bool = False,
         **kwargs,
     ):
@@ -149,7 +144,6 @@ class LLM:
             prompt (str, optional): The input prompt. Defaults to None.
             tools (list[dict], optional): Available tools. Defaults to None.
             response_format (BaseModel, optional): Expected response format. Defaults to None.
-            messages (list[dict], optional): Override conversation history. Defaults to None.
             single_tool_call_request (bool, optional): Whether to allow only one tool call. Defaults to False.
             **kwargs: Additional arguments passed to chat completion.
 
@@ -175,13 +169,10 @@ class LLM:
             completion = self._cast(
                 response_format=response_format,
                 tools=tools,
-                messages=messages or self.messages,
                 **kwargs,
             )
         else:
-            completion = self._chat(
-                messages=messages or self.messages, tools=tools, **kwargs
-            )
+            completion = self._chat(tools=tools, **kwargs)
 
         choice = completion.choices[0]
 
@@ -220,7 +211,6 @@ class LLM:
             params = {
                 "response_format": response_format,
                 "tools": tools,
-                "messages": messages or self.messages,
                 **kwargs,
             }
 

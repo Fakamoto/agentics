@@ -180,7 +180,6 @@ Both `llm.chat()` and `llm()` provide identical functionality as the main interf
 - `prompt` (str, optional): The input prompt to send to the model. If provided, appended to conversation history.
 - `tools` (list[dict], optional): List of available function tools the model can use. Each tool should be a callable with type hints.
 - `response_format` (BaseModel, optional): Pydantic model to structure and validate the response.
-- `messages` (list[dict], optional): Override the conversation history for this specific request.
 - `single_tool_call_request` (bool, optional): When True, limits the model to one request to use tools (can still call multiple tools in that request).
 - `**kwargs`: Additional arguments passed directly to the chat completion API.
 
