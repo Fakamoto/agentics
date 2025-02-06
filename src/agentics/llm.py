@@ -1,3 +1,4 @@
+import base64
 from pydantic import BaseModel, Field
 from openai import OpenAI
 from .utils import (
@@ -9,6 +10,7 @@ from .utils import (
     assistant_message,
     tool_calls_message,
     tool_message,
+    image_message,
 )
 
 
@@ -220,3 +222,27 @@ class LLM:
             response: str = self.chat(**params)
 
             return response
+
+    def add_image(self, prompt: str = None, image_url: str = None, image_path: str = None, **kwargs):
+        """
+        Adds an image to the messages list, so you can call chat method after
+
+        llm.add_image(prompt="Who is he?", image_path="./messi.jpg")
+        response: str = llm.chat()
+
+        or you can also do it with image_url
+        llm.add_image(prompt="Who is he?", image_url="https://example.com/messi.jpg")
+        response: str = llm.chat()
+        """
+        if not (image_url or image_path):
+            raise ValueError("No image provided")
+        if (image_url and image_path):
+            raise ValueError("Cannot provide both image_url and image_path")
+
+        if image_url:
+            self.messages.append(image_message(prompt=prompt, url=image_url))
+
+        if image_path:
+            with open(image_path, "rb") as f:
+                base64_image = base64.b64encode(f.read()).decode("utf-8")
+                self.messages.append(image_message(prompt=prompt, base64_image=base64_image))

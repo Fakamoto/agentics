@@ -21,6 +21,35 @@ def user_message(text: str):
 def assistant_message(text: str):
     return {"role": "assistant", "content": text}
 
+def image_message(prompt: str | None = None, image_url: str | None = None, base64_image: str | None = None):
+    if not (image_url or base64_image):
+        raise ValueError("Must provide either image_url or base64_image")
+    if image_url and base64_image:
+        raise ValueError("Cannot provide both image_url and base64_image")
+        
+    content = []
+    
+    # Add image content
+    if base64_image:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}
+        })
+    else:
+        content.append({
+            "type": "image_url", 
+            "image_url": {"url": image_url}
+        })
+        
+    # Add text content if prompt provided
+    if prompt:
+        content.append({
+            "type": "text",
+            "text": prompt
+        })
+        
+    return {"role": "user", "content": content}
+
 
 def tool_calls_message(calls: list[ChatCompletionMessageToolCall]) -> dict:
     """Convert tool calls to the proper message format"""
