@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "agentics"
-version = "0.1.6"
+version = "0.1.7"
 description = "A minimal LLM agent library"
 authors = ["Facundo Goiriz <facundogoiriz@gmail.com>"]
 readme = "README.md"
