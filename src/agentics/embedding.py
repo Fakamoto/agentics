@@ -67,17 +67,19 @@ class Embedding:
         a, b = np.array(a), np.array(b)
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-    def rank(self, vector: List[float], vectors: List[List[float]]) -> List[Tuple[List[float], float]]:
+    def rank(self, vector: List[float], vectors: List[List[float]], return_vectors: bool = False) -> List[Tuple[Union[int, List[float]], float]]:
         """
         Rank a list of vectors by similarity to a given vector using cosine similarity.
 
         Args:
             vector (List[float]): The reference embedding vector.
             vectors (List[List[float]]): A list of embedding vectors to compare against.
+            return_vectors (bool): If True, returns the actual vectors instead of their indices.
 
         Returns:
-            List[Tuple[List[float], float]]: A list of tuples where each tuple contains:
-                - The original embedding vector.
+            List[Tuple[Union[int, List[float]], float]]: A list of tuples where each tuple contains:
+                - The index of the vector in the input list (if return_vectors=False).
+                - The original embedding vector (if return_vectors=True).
                 - The cosine similarity score (higher is more similar).
                 The list is sorted in descending order of similarity.
         """
@@ -96,20 +98,8 @@ class Embedding:
 
         # Sort by highest similarity
         sorted_indices = np.argsort(-similarities)  # Order descending
-        return [(vectors[idx].tolist(), float(similarities[idx])) for idx in sorted_indices]
-
-
-if __name__ == "__main__":
-    embedder = Embedding()
-    text_a = "Hello, how are you?"
-    text_list = ["Good morning, how's it going?", "Today is a great day", "I'm feeling sad", "Greetings"]
-
-    embedding_a = embedder(text_a)
-    embedding_list = embedder(text_list)
-
-    # Rank similarities
-    ranked_similarities = embedder.rank(embedding_a, embedding_list)
-
-    print("Similarity ranking:")
-    for vector, score in ranked_similarities:
-        print(f"Vector: {vector[:2]}... Similarity: {score}")
+        
+        if return_vectors:
+            return [(vectors[idx].tolist(), float(similarities[idx])) for idx in sorted_indices]
+        else:
+            return [(int(idx), float(similarities[idx])) for idx in sorted_indices]

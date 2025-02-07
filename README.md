@@ -173,7 +173,7 @@ similarity = embedding.cosine_similarity(
     embedding("Hi there!")
 )
 
-# Rank texts by similarity
+# Rank texts by similarity (returns IDs by default)
 reference = embedding("Hello, how are you?")
 candidates = embedding([
     "Good morning, how's it going?",
@@ -184,8 +184,13 @@ candidates = embedding([
 
 # Get ranked results with similarity scores
 ranked_results = embedding.rank(reference, candidates)
-for vector, score in ranked_results:
-    print(f"Similarity score: {score}")
+for idx, score in ranked_results:
+    print(f"Text ID: {idx} Similarity Score: {score}")
+
+# Rank texts by similarity but return actual vectors instead of IDs
+ranked_results_vectors = embedding.rank(reference, candidates, return_vectors=True)
+for vector, score in ranked_results_vectors:
+    print(f"Vector: {vector[:5]}... Similarity Score: {score}")  # Show first 5 values for readability
 ```
 
 The `Embedding` class features:
@@ -193,7 +198,8 @@ The `Embedding` class features:
 - Support for both single strings and lists of strings
 - Built-in cosine similarity computation
 - Efficient similarity ranking for multiple vectors
-- Uses OpenAI's text embedding models (defaults to "text-embedding-3-small")
+- Option to return either vector IDs (default) or actual vectors
+- Uses OpenAI’s text embedding models (defaults to "text-embedding-3-small")
 
 # API Reference
 
@@ -299,12 +305,14 @@ Rank a list of vectors by similarity to a reference vector.
 ##### Parameters
 - `vector` (List[float]): The reference embedding vector
 - `vectors` (List[List[float]]): A list of embedding vectors to compare against
+- `return_vectors` (bool, optional, default=False): If True, returns the actual vectors instead of their indices.
 
 ##### Returns
-- `List[Tuple[List[float], float]]`: A list of tuples containing:
-  - The original embedding vector
+- `List[Tuple[Union[int, List[float]], float]]`: A list of tuples containing:
+  - If `return_vectors` is False: The index of the vector in the input list
+  - If `return_vectors` is True: The actual embedding vector
   - The cosine similarity score (higher is more similar)
-  Sorted in descending order of similarity.
+Sorted in descending order of similarity.
 
 ## Inspiration
 
