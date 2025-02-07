@@ -146,6 +146,55 @@ print(res)
 # width=5.5 height=3.2 depth=2.1 area=17.6 volume=36.96
 ```
 
+### Text Embeddings and Similarity Search
+
+The `Embedding` class provides a simple interface for generating text embeddings and performing similarity searches:
+
+```python
+from agentics import Embedding
+
+# Create an embedding instance
+embedding = Embedding()
+
+# Get embedding for a single string
+vector = embedding("Hello, how are you?")
+
+# Get embeddings for multiple strings at once
+vectors = embedding([
+    "Good morning, how's it going?",
+    "Today is a great day",
+    "I'm feeling sad",
+    "Greetings"
+])
+
+# Compare two texts using cosine similarity
+similarity = embedding.cosine_similarity(
+    embedding("Hello!"),
+    embedding("Hi there!")
+)
+
+# Rank texts by similarity
+reference = embedding("Hello, how are you?")
+candidates = embedding([
+    "Good morning, how's it going?",
+    "Today is a great day",
+    "I'm feeling sad",
+    "Greetings"
+])
+
+# Get ranked results with similarity scores
+ranked_results = embedding.rank(reference, candidates)
+for vector, score in ranked_results:
+    print(f"Similarity score: {score}")
+```
+
+The `Embedding` class features:
+- Simple interface for generating embeddings from text
+- Support for both single strings and lists of strings
+- Built-in cosine similarity computation
+- Efficient similarity ranking for multiple vectors
+- Uses OpenAI's text embedding models (defaults to "text-embedding-3-small")
+
 # API Reference
 
 ## LLM
@@ -209,8 +258,53 @@ Both `llm.chat()` and `llm()` provide identical functionality as the main interf
 
 The conversation history is accessible via the `.messages` attribute, making it easy to inspect or manipulate the context.
 
+## Embedding
 
+The interface for generating text embeddings and performing similarity operations. Provides a simple API for embedding generation and similarity ranking.
 
+### Constructor Parameters
+
+- `model` (str, optional): The model identifier to use (default: "text-embedding-3-small")
+- `client` (OpenAI, optional): Custom OpenAI client instance. If None, creates new instance.
+
+### Methods
+
+#### embed() / __call__()
+
+Both `embedding.embed()` and `embedding()` provide identical functionality for generating embeddings.
+
+##### Parameters
+- `input` (Union[str, List[str]]): Text input, either a single string or a list of strings.
+
+##### Returns
+- `Union[List[float], List[List[float]]]`: 
+  - For single string input: a list of floats (the embedding vector)
+  - For list input: a list of embeddings (list of float lists)
+
+#### cosine_similarity()
+
+Compute cosine similarity between two embedding vectors.
+
+##### Parameters
+- `a` (List[float]): The first embedding vector
+- `b` (List[float]): The second embedding vector
+
+##### Returns
+- `float`: The cosine similarity score between -1 and 1
+
+#### rank()
+
+Rank a list of vectors by similarity to a reference vector.
+
+##### Parameters
+- `vector` (List[float]): The reference embedding vector
+- `vectors` (List[List[float]]): A list of embedding vectors to compare against
+
+##### Returns
+- `List[Tuple[List[float], float]]`: A list of tuples containing:
+  - The original embedding vector
+  - The cosine similarity score (higher is more similar)
+  Sorted in descending order of similarity.
 
 ## Inspiration
 
@@ -228,7 +322,6 @@ response = client.chat.completions.create(
 )
 print(response.choices[0].message.content)
 ```
-
 
 When my goal in mind was to be able to simply do `llm("Hello!")`, with that desired interface is how I started building Agentics, this:
 
@@ -254,8 +347,6 @@ llm = LLM()
 response = llm("Hello!")
 print(response)
 ```
-
-
 
 Agentics makes things simple while bringing these powerful features into the same library:
 
