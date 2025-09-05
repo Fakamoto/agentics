@@ -1,15 +1,16 @@
 [tool.poetry]
 name = "agentics"
-version = "0.1.9"
+version = "0.2.0"
 description = "A minimal LLM agent library"
 authors = ["Facundo Goiriz <facundogoiriz@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<3.14"
 openai = ">=1.58.1"
 pydantic = ">=2.10.4"
 numpy = "^1.26.4"
+dspy = "3.0.3"
 
 [build-system]
 requires = ["poetry-core"]

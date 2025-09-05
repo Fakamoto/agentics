@@ -9,6 +9,7 @@ from .utils import (
     tool_message,
     tool_calls_message,
 )
+from .dspy_core import Program
 
 __version__ = importlib.metadata.version("agentics")
 
@@ -22,4 +23,7 @@ __all__ = [
     "assistant_message",
     "tool_message",
     "tool_calls_message",
+
+    # Dspy Core
+    "Program",
 ]
