@@ -1,8 +1,7 @@
 from abc import abstractmethod, ABCMeta
+from functools import wraps
+import asyncio, inspect, json, platform, datetime
 import dspy
-import json
-import platform
-import datetime
 from pathlib import Path
 from typing import Optional, Literal
 from dspy.teleprompt.teleprompt import Teleprompter
@@ -21,11 +20,43 @@ class Program(dspy.Module, metaclass=ProgramMeta):
         self.optimized_program = None
         self.score = None
 
-    ##### Required Methods #####
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        f = cls.__dict__.get("forward")
+        if callable(f) and not inspect.iscoroutinefunction(f):
+            @wraps(f)
+            def wrapped(self, *a, **k):
+                with dspy.context(lm=self.lm):
+                    return f(self, *a, **k)
+            setattr(cls, "forward", wrapped)
+        af = cls.__dict__.get("aforward")
+        if callable(af) and inspect.iscoroutinefunction(af):
+            @wraps(af)
+            async def awrapped(self, *a, **k):
+                with dspy.context(lm=self.lm):
+                    return await af(self, *a, **k)
+            setattr(cls, "aforward", awrapped)
+
+    def __call__(self, *a, **k):
+        with dspy.context(lm=self.lm):
+            return super().__call__(*a, **k)
+
+    async def acall(self, *a, **k):
+        with dspy.context(lm=self.lm):
+            sup_acall = getattr(super(), "acall", None)
+            if callable(sup_acall) and inspect.iscoroutinefunction(sup_acall):
+                return await sup_acall(*a, **k)
+            af = getattr(self, "aforward", None)
+            if callable(af) and inspect.iscoroutinefunction(af):
+                return await af(*a, **k)
+            return await asyncio.to_thread(lambda: super().__call__(*a, **k))
+
     @abstractmethod
     def forward(self, *args, **kwargs):
-        """Forward method for prediction - must be implemented by subclass"""
-        pass
+        ...
+
+    async def aforward(self, *args, **kwargs):
+        raise NotImplementedError
 
     ##### Required for optimization #####
     @property
