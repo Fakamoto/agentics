@@ -75,7 +75,7 @@ class Program(dspy.Module, metaclass=ProgramMeta):
         return []
 
     @staticmethod
-    def metric(example: dspy.Example, prediction: dspy.Prediction, trace=None) -> float:
+    def metric(example: dspy.Example, prediction: dspy.Prediction, trace=None, pred_name=None, pred_trace=None) -> float:
         """Evaluation metric for this program - optional, used for evaluation"""
         return 0.0
 
@@ -218,6 +218,11 @@ class Program(dspy.Module, metaclass=ProgramMeta):
                 "def valset(self):\n"
                 "    return [dspy.Example(question='...', answer='...')]"
             )
+
+    def ensure_optim_requirements(self):
+        self.ensure_metric()
+        self.ensure_trainset()
+        self.ensure_valset()
 
 
     ##### Save and Load #####
@@ -465,9 +470,7 @@ class Program(dspy.Module, metaclass=ProgramMeta):
         Returns:
             Optimized program with injected optimizer metadata
         """
-        self.ensure_metric()
-        self.ensure_trainset()
-        self.ensure_valset()
+        self.ensure_optim_requirements()
         optimizer = dspy.BootstrapFewShot(
             metric=self.metric,
             max_bootstrapped_demos=max_bootstrapped_demos,
@@ -502,9 +505,7 @@ class Program(dspy.Module, metaclass=ProgramMeta):
         """
         Optimize the program using MIPROv2 and return the optimized program with metadata.
         """
-        self.ensure_metric()
-        self.ensure_trainset()
-        self.ensure_valset()
+        self.ensure_optim_requirements()
         # Initialize optimizer
         teleprompter = dspy.MIPROv2(
             metric=self.metric,
@@ -532,9 +533,7 @@ class Program(dspy.Module, metaclass=ProgramMeta):
         max_steps: int = 8,
         num_threads: Optional[int] = None,
     ):
-        self.ensure_metric()
-        self.ensure_trainset()
-        self.ensure_valset()
+        self.ensure_optim_requirements()
         optimizer = dspy.SIMBA(
             metric=self.metric,
             bsize=bsize,
@@ -554,17 +553,19 @@ class Program(dspy.Module, metaclass=ProgramMeta):
 
     def GEPA(
         self,
-        metric,  # Required: GEPA needs a 5-argument metric (gold, pred, trace, pred_name, pred_trace)
-        auto: Optional[Literal["light", "medium", "heavy"]] = None,
+        auto: Optional[Literal["light", "medium", "heavy"]] = "light",
         reflection_lm: Optional[dspy.LM] = None,
         num_threads: Optional[int] = None,
         teacher: Optional[dspy.LM] = None,
     ):
-        # GEPA uses its own metric, so we skip the standard metric check
-        self.ensure_trainset()
-        self.ensure_valset()
+        self.ensure_optim_requirements()
+
+        # GEPA needs a 5-argument metric (gold, pred, trace, pred_name, pred_trace)
+
+        reflection_lm = reflection_lm or self.lm
+
         optimizer = dspy.GEPA(
-            metric=metric,
+            metric=self.metric,
             auto=auto,
             reflection_lm=reflection_lm,
             num_threads=num_threads,
