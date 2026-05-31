@@ -223,7 +223,7 @@ class LLM:
 
             return response
 
-    def add_image(self, prompt: str = None, image_url: str = None, image_path: str = None, **kwargs):
+    def add_image(self, prompt: str = None, image_url: str = None, image_path: str = None):
         """
         Adds an image to the messages list, so you can call chat method after
 
@@ -240,7 +240,7 @@ class LLM:
             raise ValueError("Cannot provide both image_url and image_path")
 
         if image_url:
-            self.messages.append(image_message(prompt=prompt, url=image_url))
+            self.messages.append(image_message(prompt=prompt, image_url=image_url))
 
         if image_path:
             with open(image_path, "rb") as f:

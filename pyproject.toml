@@ -4,6 +4,8 @@ version = "0.2.2"
 description = "A minimal LLM agent library"
 authors = ["Facundo Goiriz <facundogoiriz@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+repository = "https://github.com/Fakamoto/agentics"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"

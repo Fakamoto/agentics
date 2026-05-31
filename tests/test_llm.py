@@ -112,6 +112,40 @@ def test_llm_empty_tools_list():
     assert isinstance(response, str)
 
 
+def test_llm_add_image_url_message():
+    llm = LLM()
+
+    llm.add_image(prompt="Describe this", image_url="https://example.com/image.png")
+
+    assert llm.messages == [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": "https://example.com/image.png"},
+                },
+                {"type": "text", "text": "Describe this"},
+            ],
+        }
+    ]
+
+
+def test_llm_add_image_path_message(tmp_path):
+    image_path = tmp_path / "image.jpg"
+    image_path.write_bytes(b"image-bytes")
+    llm = LLM()
+
+    llm.add_image(prompt="Describe this", image_path=str(image_path))
+
+    assert llm.messages[0]["role"] == "user"
+    assert llm.messages[0]["content"][0] == {
+        "type": "image_url",
+        "image_url": {"url": "data:image/jpeg;base64,aW1hZ2UtYnl0ZXM="},
+    }
+    assert llm.messages[0]["content"][1] == {"type": "text", "text": "Describe this"}
+
+
 def test_llm_complex_structured_output():
     """Test nested structured output."""
 
